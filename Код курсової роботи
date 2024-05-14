@@ -1,0 +1,2369 @@
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PIL import Image, ImageEnhance
+import re
+import csv
+
+class Robot():
+    def __init__(self, gender, height, strength, carrying_capacity, skin_color, eye_color,
+                 hair_length, hair_color, series, memory, battery, plus_features):
+        self.gender = gender
+        self.height = height
+        self.strength = strength
+        self.carrying_capacity = carrying_capacity
+        self.skin_color = skin_color
+        self.eye_color = eye_color
+        self.hair_length = hair_length
+        self.hair_color = hair_color
+        self.series = series
+        self.memory = memory
+        self.battery = battery
+        self.plus_features = plus_features
+
+    def __str__(self):
+        return f"Пол: {self.gender}\nЗріст: {self.height}\n" \
+                        f"Міцність: {self.strength}\nВантажопідйомність: {self.carrying_capacity}\n" \
+                        f"Колір шкіри: {self.skin_color}\nКолір очей: {self.eye_color}\n" \
+                        f"Колір волосся: {self.hair_color}\nДовжина волосся: {self.hair_length}\n" \
+                        f"Серія: {self.series}\nПам'ять: {self.memory}\nЄмність акумулятора:\n{self.battery}\n" \
+                        f"Додаткові можливості:\n{', '.join(self.plus_features)}"
+
+class PriceCalculator:
+    def calculate_price(self, gender, height, strength, carrying_capacity, skin_color, eye_color,
+                        hair_length, hair_color, seria, memory, battery, plus_features):
+        base_price = 500000
+
+        gender_price_map = {"ж": 0, "ч": 0}
+        height_price_map = {"100 см": 0, "120 см": 0, "140 см": 0, "160 см": 0, "180 см": 0, "200 см": 0, "220 см": 0}
+        strength_price_map = {"Звичайна": 0, "Збільшена": 4000, "Бронезахист": 30000}
+        carrying_capacity_price_map = {"100 кг": 0, "300 кг": 6000, "500 кг": 9000, "1000 кг": 15000}
+        skin_color_price_map = {"Світла": 0, "Темна": 0}
+        eye_color_price_map = {"Голубий": 0, "Зелений": 0, "Карий": 0}
+        hair_length_price_map = {"Коротке": 0, "Довге": 0}
+        hair_color_price_map = {"Чорний": 0, "Коричневий": 0, "Рудий": 0, "Блонд": 0}
+        seria_price_map = {"Бюджетна": 0, "Середня": 10000, "Топ": 30000}
+        memory_price_map = {"1 Т": 0, "2 Т": 20000, "3 Т": 30000, "4 Т": 40000, "5 Т": 50000}
+        battery_price_map = {"10000 мАгод": 0, "15000 мАгод": 4000, "20000 мАгод": 9000, "25000 мАгод": 15000,
+                             "30000 мАгод": 20000}
+
+        gender_price = gender_price_map[gender] if gender in gender_price_map else 0
+        height_price = height_price_map[height] if height in height_price_map else 0
+        strength_price = strength_price_map[strength] if strength in strength_price_map else 0
+        carrying_capacity_price = carrying_capacity_price_map[
+            carrying_capacity] if carrying_capacity in carrying_capacity_price_map else 0
+        skin_color_price = skin_color_price_map[skin_color] if skin_color in skin_color_price_map else 0
+        eye_color_price = eye_color_price_map[eye_color] if eye_color in eye_color_price_map else 0
+        hair_color_price = hair_color_price_map[hair_color] if hair_color in hair_color_price_map else 0
+        hair_length_price = hair_length_price_map[hair_length] if hair_length in hair_length_price_map else 0
+        seria_price = seria_price_map[seria] if seria in seria_price_map else 0
+        memory_price = memory_price_map[memory] if memory in memory_price_map else 0
+        battery_price = battery_price_map[battery] if battery in battery_price_map else 0
+        plus_features_price = 0
+        if "Захист від вологи" in plus_features:
+            plus_features_price += 5000
+        if "NFC-чіп" in plus_features:
+            plus_features_price += 2000
+
+        total_price = base_price + gender_price + height_price + strength_price + carrying_capacity_price + \
+                      skin_color_price + eye_color_price + hair_length_price + hair_color_price + seria_price + \
+                      memory_price + battery_price + plus_features_price
+        return total_price
+
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Your BFF")
+        self.setFixedSize(1300, 975)
+        self.move(350, 50)
+        self.setWindowIcon(QtGui.QIcon('icon.png'))
+        self.robot = None
+
+        self.setup_widgets()
+
+    def setup_widgets(self):
+        self.setWindowTitle("Your BFF")
+        self.setFixedSize(1300, 975)
+        self.move(350, 50)
+        self.setWindowIcon(QtGui.QIcon('icon.png'))
+
+        self.widget = QtWidgets.QWidget(self)
+        self.widget.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.widget.setStyleSheet("background-color: rgb(0, 0, 0);")
+
+        self.widget_1 = QtWidgets.QWidget(self.widget)
+        self.widget_1.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_1 = QtWidgets.QLabel(self.widget_1)
+        self.label_widget_1.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("bg_new.png")
+        self.label_widget_1.setPixmap(QtGui.QPixmap("bg_new.png"))
+        self.setup_widget_1()
+
+        self.widget_2 = QtWidgets.QWidget(self.widget)
+        self.widget_2.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_2 = QtWidgets.QLabel(self.widget_2)
+        self.label_widget_2.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_2.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.7)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(2.0)
+        enhanced_image.save("bg_2_new.png")
+        self.label_widget_2.setPixmap(QtGui.QPixmap("bg_2_new.png"))
+        self.widget_2.setVisible(False)
+
+        self.setup_widget_2()
+
+        self.widget_3 = QtWidgets.QWidget(self.widget)
+        self.widget_3.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_3 = QtWidgets.QLabel(self.widget_3)
+        self.label_widget_3.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_3.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.8)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(2.0)
+        enhanced_image.save("bg_3_new.png")
+        self.label_widget_3.setPixmap(QtGui.QPixmap("bg_3_new.png"))
+        self.widget_3.setVisible(False)
+
+        self.setup_widget_3()
+
+        self.widget_4 = QtWidgets.QWidget(self.widget)
+        self.widget_4.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_4 = QtWidgets.QLabel(self.widget_4)
+        self.label_widget_4.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_7.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.8)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(2.0)
+        enhanced_image.save("bg_7_new.png")
+        self.label_widget_4.setPixmap(QtGui.QPixmap("bg_7_new.png"))
+        self.widget_4.setVisible(False)
+
+        self.setup_widget_4()
+
+        self.widget_5 = QtWidgets.QWidget(self.widget)
+        self.widget_5.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_5 = QtWidgets.QLabel(self.widget_5)
+        self.label_widget_5.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_5.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.8)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(3.0)
+        enhanced_image.save("bg_5_new.png")
+        self.label_widget_5.setPixmap(QtGui.QPixmap("bg_5_new.png"))
+        self.widget_5.setVisible(False)
+
+        self.setup_widget_5()
+
+        self.widget_6 = QtWidgets.QWidget(self.widget)
+        self.widget_6.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_6 = QtWidgets.QLabel(self.widget_6)
+        self.label_widget_6.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_4.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.8)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(2.0)
+        enhanced_image.save("bg_4_new.png")
+        self.label_widget_6.setPixmap(QtGui.QPixmap("bg_4_new.png"))
+        self.widget_6.setVisible(False)
+
+        self.setup_widget_6()
+
+        self.widget_7 = QtWidgets.QWidget(self.widget)
+        self.widget_7.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_7 = QtWidgets.QLabel(self.widget_7)
+        self.label_widget_7.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_8.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.7)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(2.0)
+        enhanced_image.save("bg_8_new.png")
+        self.label_widget_7.setPixmap(
+            QtGui.QPixmap("bg_8_new.png"))
+        self.widget_7.setVisible(False)
+
+        self.setup_widget_7()
+
+        self.widget_8 = QtWidgets.QWidget(self.widget)
+        self.widget_8.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_8 = QtWidgets.QLabel(self.widget_8)
+        self.label_widget_8.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg_9.png")
+        enhanced_image = ImageEnhance.Brightness(original_image).enhance(0.7)
+        enhanced_image = ImageEnhance.Sharpness(enhanced_image).enhance(2.0)
+        enhanced_image.save("bg_9_new.png")
+        self.label_widget_8.setPixmap(
+            QtGui.QPixmap("bg_9_new.png"))
+        self.widget_8.setVisible(False)
+
+        self.setup_widget_8()
+
+        self.widget_9 = QtWidgets.QWidget(self.widget)
+        self.widget_9.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        self.label_widget_9 = QtWidgets.QLabel(self.widget_9)
+        self.label_widget_9.setGeometry(QtCore.QRect(0, 0, 1300, 975))
+        original_image = Image.open("bg.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("bg_new.png")
+        self.label_widget_9.setPixmap(QtGui.QPixmap("bg_new.png"))
+        self.widget_9.setVisible(False)
+
+        self.setup_widget_9()
+
+        self.setup_buttons()
+
+    def setup_buttons(self):
+        self.w1_button_next.clicked.connect(self.show_widget_2)
+        self.w2_button_next.clicked.connect(self.show_widget_3)
+        self.w3_button_next.clicked.connect(self.show_widget_4)
+        self.w4_button_next.clicked.connect(self.show_widget_5)
+        self.w5_button_next.clicked.connect(self.show_widget_6)
+        self.w6_button_next.clicked.connect(self.show_widget_7)
+        self.w7_button_poll.clicked.connect(self.show_widget_8)
+        self.w7_button_refuse.clicked.connect(self.skip_poll)
+        self.w8_button_next.clicked.connect(self.show_widget_9)
+        self.w9_button_end.clicked.connect(self.exit)
+        self.w9_button_return_to_w1.clicked.connect(self.show_widget_1)
+
+    def setup_widget_1(self):
+        self.w1_label_text_1 = QtWidgets.QLabel("Your BFF", self.widget_1)
+        font = QtGui.QFont()
+        font.setFamily("Nyala")
+        font.setPointSize(90)
+        font.setBold(True)
+        self.w1_label_text_1.setFont(font)
+        self.w1_label_text_1.setAlignment(QtCore.Qt.AlignCenter)
+        self.w1_label_text_1.adjustSize()
+        self.w1_label_text_1.move(315, 320)
+        self.w1_label_text_1.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                  "color: rgb(0, 0, 0);")
+
+        self.w1_label_text_2 = QtWidgets.QLabel("ЛАБОРАТОРІЯ ЗІ СТВОРЕННЯ РОБОТІВ", self.widget_1)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        self.w1_label_text_2.setFont(font)
+        self.w1_label_text_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.w1_label_text_2.adjustSize()
+        self.w1_label_text_2.move(347, 500)
+        self.w1_label_text_2.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                      "color: rgb(0, 0, 0);")
+
+        self.w1_button_next = QtWidgets.QPushButton("РОЗПОЧАТИ", self.widget_1)
+        self.w1_button_next.setGeometry(QtCore.QRect(515, 580, 270, 81))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        font.setBold(True)
+        self.w1_button_next.setFont(font)
+        self.w1_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                QPushButton {
+                    background-color: rgb(255, 145, 72);
+                    color: rgb(255, 255, 255);
+                    border-radius: 20px;
+                    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+                }
+                QPushButton:hover {
+                    background-color: rgb(255, 230, 203);
+                    color: rgb(255, 145, 72);
+                }
+                """
+        self.w1_button_next.setStyleSheet(style)
+
+    def setup_widget_2(self):
+        self.widget_2_1 = QtWidgets.QWidget(self.widget_2)
+        self.widget_2_1.setGeometry(QtCore.QRect(750, 220, 461, 541))
+        self.widget_2_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 25px;")
+
+        self.w2_label_1 = QtWidgets.QLabel("Your BFF", self.widget_2)
+        font = QtGui.QFont()
+        font.setFamily("Nyala")
+        font.setPointSize(60)
+        font.setBold(True)
+        self.w2_label_1.setFont(font)
+        self.w2_label_1.setAlignment(QtCore.Qt.AlignCenter)
+        self.w2_label_1.adjustSize()
+        self.w2_label_1.move(60, 320)
+        self.w2_label_1.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                      "background-color: rgba(255, 255, 255, 0);")
+
+        self.w2_label_2 = QtWidgets.QLabel("ЛАБОРАТОРІЯ ЗІ СТВОРЕННЯ РОБОТІВ", self.widget_2)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        font.setBold(True)
+        self.w2_label_2.setFont(font)
+        self.w2_label_2.adjustSize()
+        self.w2_label_2.move(60, 305)
+        self.w2_label_2.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                      "background-color: rgba(255, 255, 255, 0);")
+
+        self.w2_label_3 = QtWidgets.QLabel(
+            "  Наша місія - перетворити ваші мрії у реальність,\n"
+            "створюючи унікальних персональних роботів-друзів,\n"
+            "які повністю відповідають вашим потребам та вимогам.\n\n"
+            "  Завдяки використанню передових технологій у сфері\n"
+            "штучного інтелекту та робототехніки, ми створюємо\n"
+            "унікальних друзів-помічників, які можуть стати\n"
+            "справжньою знахідкою для людей, які з різних причин\n"
+            "не можуть отримати належну соціальну взаємодію,\n"
+            "або просто відчувають себе самотніми.",
+            self.widget_2)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        font.setBold(True)
+        self.w2_label_3.setFont(font)
+        self.w2_label_3.setAlignment(QtCore.Qt.AlignLeft)
+        self.w2_label_3.adjustSize()
+        self.w2_label_3.move(60, 490)
+        self.w2_label_3.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                      "color: rgb(255, 255, 255);")
+
+        self.w2_label_4 = QtWidgets.QLabel("ЗАПОВНІТЬ ДАНІ ПРО СЕБЕ", self.widget_2_1)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        self.w2_label_4.setFont(font)
+        self.w2_label_4.adjustSize()
+        self.w2_label_4.move(30, 20)
+        self.w2_label_4.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                        "background-color: rgba(255, 255, 255, 0);")
+
+        self.w2_label_pib = QtWidgets.QLabel("ПІБ", self.widget_2_1)
+        self.w2_label_pib.setGeometry(QtCore.QRect(80, 80, 291, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w2_label_pib.setFont(font)
+        self.w2_label_pib.setAlignment(QtCore.Qt.AlignCenter)
+        self.w2_label_pib.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                        "border-color: rgb(255, 145, 72);\n"
+                                        "border-width: 2px;\n"
+                                        "border-style: solid;\n"
+                                        "color: rgb(255, 255, 255);\n"
+                                        "border-radius: 20px;")
+
+        self.w2_textEdit_pib = QtWidgets.QTextEdit(self.widget_2_1)
+        self.w2_textEdit_pib.setGeometry(QtCore.QRect(80, 135, 290, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w2_textEdit_pib.setFont(font)
+        self.w2_textEdit_pib.viewport().setProperty("cursor", QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.w2_textEdit_pib.setPlaceholderText("Карпук Ніна Іванівна")
+        self.w2_textEdit_pib.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w2_label_number = QtWidgets.QLabel("Номер телефону", self.widget_2_1)
+        self.w2_label_number.setGeometry(QtCore.QRect(80, 190, 291, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w2_label_number.setFont(font)
+        self.w2_label_number.setAlignment(QtCore.Qt.AlignCenter)
+        self.w2_label_number.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+
+        self.w2_textEdit_number = QtWidgets.QTextEdit(self.widget_2_1)
+        self.w2_textEdit_number.setGeometry(QtCore.QRect(80, 245, 290, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w2_textEdit_number.setFont(font)
+        self.w2_textEdit_number.viewport().setProperty("cursor", QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.w2_textEdit_number.setPlaceholderText("380112223333")
+        self.w2_textEdit_number.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w2_label_email = QtWidgets.QLabel("E-mail", self.widget_2_1)
+        self.w2_label_email.setGeometry(QtCore.QRect(80, 300, 291, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w2_label_email.setFont(font)
+        self.w2_label_email.setAlignment(QtCore.Qt.AlignCenter)
+        self.w2_label_email.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+
+        self.w2_textEdit_email= QtWidgets.QTextEdit(self.widget_2_1)
+        self.w2_textEdit_email.setGeometry(QtCore.QRect(80, 355, 290, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w2_textEdit_email.setFont(font)
+        self.w2_textEdit_email.viewport().setProperty("cursor", QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.w2_textEdit_email.setPlaceholderText("pryklad@gmail.com")
+        self.w2_textEdit_email.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w2_label_city = QtWidgets.QLabel("Місто/населений пункт", self.widget_2_1)
+        self.w2_label_city.setGeometry(QtCore.QRect(80, 410, 291, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w2_label_city.setFont(font)
+        self.w2_label_city.setAlignment(QtCore.Qt.AlignCenter)
+        self.w2_label_city.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+
+        self.w2_textEdit_city = QtWidgets.QTextEdit(self.widget_2_1)
+        self.w2_textEdit_city.setGeometry(QtCore.QRect(80, 465, 290, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w2_textEdit_city.setFont(font)
+        self.w2_textEdit_city.viewport().setProperty("cursor", QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.w2_textEdit_city.setPlaceholderText("Київ")
+        self.w2_textEdit_city.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w2_button_next = QtWidgets.QPushButton("ДАЛІ", self.widget_2)
+        self.w2_button_next.setGeometry(QtCore.QRect(915, 750, 150, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(15)
+        font.setBold(True)
+        self.w2_button_next.setFont(font)
+        self.w2_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                        QPushButton {
+                            background-color: rgb(255, 145, 72);
+                            color: rgb(255, 255, 255);
+                            border-radius: 20px;
+                        }
+                        QPushButton:hover {
+                            background-color: rgb(255, 230, 203);
+                            color: rgb(255, 145, 72);
+                        }
+                        """
+        self.w2_button_next.setStyleSheet(style)
+
+    def setup_widget_3(self):
+        self.widget_3_1 = QtWidgets.QWidget(self.widget_3)
+        self.widget_3_1.setGeometry(QtCore.QRect(150, 200, 1000, 541))
+        self.widget_3_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 25px;")
+
+        self.w3_label_1 = QtWidgets.QLabel("ОСОБЛИВОСТІ РОБОТА-ДРУГА", self.widget_3_1)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        self.w3_label_1.setFont(font)
+        self.w3_label_1.setAlignment(QtCore.Qt.AlignCenter)
+        self.w3_label_1.adjustSize()
+        self.w3_label_1.move(250, 50)
+        self.w3_label_1.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                      "color: rgb(255, 145, 72);")
+
+        self.w3_frame_1 = QtWidgets.QFrame(self.widget_3_1)
+        self.w3_frame_1.setGeometry(QtCore.QRect(110, 160, 201, 315))
+        self.w3_frame_1.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                    "border-width: 3px;\n"
+                                    "border-style: solid;\n"
+                                    "border-radius: 20px;\n"
+                                    "background-color: rgba(255, 255, 255, 0);\n"
+                                    "")
+        self.w3_frame_1.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w3_frame_1.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w3_label_2 = QtWidgets.QLabel("Зовнішній вигляд\nсхожий до людей", self.w3_frame_1)
+        self.w3_label_2.setGeometry(QtCore.QRect(0, 130, 201, 52))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w3_label_2.setFont(font)
+        self.w3_label_2.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w3_label_2.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w3_label_frame_1 = QtWidgets.QLabel(self.w3_frame_1)
+        self.w3_label_frame_1.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Зовнішність.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Зовнішність_new.png")
+        self.w3_label_frame_1.setPixmap(QtGui.QPixmap("Зовнішність_new.png"))
+
+        self.w3_label_3 = QtWidgets.QLabel("Завдяки штучній шкірі\n"
+                                           "та реалістичним м'язам,\n"
+                                           "вони схожі на людей.\n"
+                                           "Також вони можуть\n"
+                                           "відтворювати людські\n"
+                                           "міміку та жести.", self.w3_frame_1)
+        self.w3_label_3.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w3_label_3.setFont(font)
+        self.w3_label_3.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w3_label_3.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w3_frame_2 = QtWidgets.QFrame(self.widget_3_1)
+        self.w3_frame_2.setGeometry(QtCore.QRect(390, 160, 201, 315))
+        self.w3_frame_2.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                      "border-width: 3px;\n"
+                                      "border-style: solid;\n"
+                                      "border-radius: 20px;\n"
+                                      "background-color: rgba(255, 255, 255, 0);\n"
+                                      "")
+        self.w3_frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w3_frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w3_label_4 = QtWidgets.QLabel("Емоційна експресія", self.w3_frame_2)
+        self.w3_label_4.setGeometry(QtCore.QRect(0, 130, 201, 52))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w3_label_4.setFont(font)
+        self.w3_label_4.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w3_label_4.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w3_label_frame_2 = QtWidgets.QLabel(self.w3_frame_2)
+        self.w3_label_frame_2.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Емоції.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Емоції_new.png")
+        self.w3_label_frame_2.setPixmap(QtGui.QPixmap("Емоції_new.png"))
+
+        self.w3_label_5 = QtWidgets.QLabel("Завдяки датчикам та\n"
+                                           "камерам, роботи\n"
+                                           "вловлюють емоції й\n"
+                                           "можуть реагувати на\n"
+                                           "них,підбираючи потрібні\n"
+                                           "слова та інтонацію.", self.w3_frame_2)
+        self.w3_label_5.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w3_label_5.setFont(font)
+        self.w3_label_5.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w3_label_5.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w3_frame_3 = QtWidgets.QFrame(self.widget_3_1)
+        self.w3_frame_3.setGeometry(QtCore.QRect(670, 160, 201, 315))
+        self.w3_frame_3.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                      "border-width: 3px;\n"
+                                      "border-style: solid;\n"
+                                      "border-radius: 20px;\n"
+                                      "background-color: rgba(255, 255, 255, 0);\n"
+                                      "")
+        self.w3_frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w3_frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w3_label_6 = QtWidgets.QLabel("Навчання та\nадаптація", self.w3_frame_3)
+        self.w3_label_6.setGeometry(QtCore.QRect(0, 130, 201, 52))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w3_label_6.setFont(font)
+        self.w3_label_6.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w3_label_6.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w3_label_frame_3 = QtWidgets.QLabel(self.w3_frame_3)
+        self.w3_label_frame_3.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Навчання.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Навчання_new.png")
+        self.w3_label_frame_3.setPixmap(QtGui.QPixmap("Навчання_new.png"))
+
+        self.w3_label_7 = QtWidgets.QLabel("Можуть навчатися\n"
+                                           "новому та адаптуватися\n"
+                                           "до різних ситуацій, як і\n"
+                                           "люди, що дозволяє \n"
+                                           "роботам ставати більш\n"
+                                           "корисним з часом.", self.w3_frame_3)
+        self.w3_label_7.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w3_label_7.setFont(font)
+        self.w3_label_7.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w3_label_7.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w3_button_next = QtWidgets.QPushButton("ДАЛІ", self.widget_3)
+        self.w3_button_next.setGeometry(QtCore.QRect(586, 720, 150, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w3_button_next.setFont(font)
+        self.w3_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                        QPushButton {
+                                            background-color: rgb(255, 145, 72);
+                                            color: rgb(255, 255, 255);
+                                            border-radius: 20px;
+                                        }
+                                        QPushButton:hover {
+                                            background-color: rgb(255, 230, 203);
+                                            color: rgb(255, 145, 72);
+                                        }
+                                        """
+        self.w3_button_next.setStyleSheet(style)
+
+    def setup_widget_4(self):
+        self.widget_4_1 = QtWidgets.QWidget(self.widget_4)
+        self.widget_4_1.setGeometry(QtCore.QRect(150, 200, 1000, 541))
+        self.widget_4_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 25px;")
+
+        self.w4_label_1 = QtWidgets.QLabel("ФУНКЦІЇ РОБОТА-ДРУГА", self.widget_4_1)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        self.w4_label_1.setFont(font)
+        self.w4_label_1.setAlignment(QtCore.Qt.AlignCenter)
+        self.w4_label_1.adjustSize()
+        self.w4_label_1.move(300, 50)
+        self.w4_label_1.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                      "color: rgb(255, 145, 72);")
+
+        self.w4_frame_1 = QtWidgets.QFrame(self.widget_4_1)
+        self.w4_frame_1.setGeometry(QtCore.QRect(50, 160, 201, 315))
+        self.w4_frame_1.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                    "border-width: 2px;\n"
+                                    "border-style: solid;\n"
+                                    "border-radius: 20px;\n"
+                                    "background-color: rgba(255, 255, 255, 0);\n"
+                                    "")
+        self.w4_frame_1.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w4_frame_1.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w4_label_2 = QtWidgets.QLabel("Підтримка та\nспілкування", self.w4_frame_1)
+        self.w4_label_2.setGeometry(QtCore.QRect(0, 130, 201, 51))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w4_label_2.setFont(font)
+        self.w4_label_2.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_2.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_label_frame_1 = QtWidgets.QLabel(self.w4_frame_1)
+        self.w4_label_frame_1.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Спілкування.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Спілкування_new.png")
+        self.w4_label_frame_1.setPixmap(QtGui.QPixmap("Спілкування_new.png"))
+
+        self.w4_label_3 = QtWidgets.QLabel("Робот може стати вірним\n"
+                                           "другом, з яким можна\n"
+                                           "поділитися думками,\n"
+                                           "почуттями та\n"
+                                           "переживаннями. Він\n"
+                                           "завжди підтримає й\n"
+                                           "може дати пораду.", self.w4_frame_1)
+        self.w4_label_3.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w4_label_3.setFont(font)
+        self.w4_label_3.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_3.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_frame_2 = QtWidgets.QFrame(self.widget_4_1)
+        self.w4_frame_2.setGeometry(QtCore.QRect(280, 160, 201, 315))
+        self.w4_frame_2.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                      "border-width: 2px;\n"
+                                      "border-style: solid;\n"
+                                      "border-radius: 20px;\n"
+                                      "background-color: rgba(255, 255, 255, 0);\n"
+                                      "")
+        self.w4_frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w4_frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w4_label_4 = QtWidgets.QLabel("Допомога по роботі\nта господарству", self.w4_frame_2)
+        self.w4_label_4.setGeometry(QtCore.QRect(0, 130, 201, 51))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w4_label_4.setFont(font)
+        self.w4_label_4.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_4.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_label_frame_2 = QtWidgets.QLabel(self.w4_frame_2)
+        self.w4_label_frame_2.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Робота.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Робота_new.png")
+        self.w4_label_frame_2.setPixmap(QtGui.QPixmap("Робота_new.png"))
+
+        self.w4_label_5 = QtWidgets.QLabel("Робот може прибирати\n"
+                                           "в квартирі, готувати їжу,\n"
+                                           "робити покупки та\n"
+                                           "виконувати іншу роботу,\n"
+                                           "звільняючи Ваш час для\n"
+                                           "більш приємних справ.", self.w4_frame_2)
+        self.w4_label_5.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w4_label_5.setFont(font)
+        self.w4_label_5.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_5.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_frame_3 = QtWidgets.QFrame(self.widget_4_1)
+        self.w4_frame_3.setGeometry(QtCore.QRect(510, 160, 201, 315))
+        self.w4_frame_3.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                      "border-width: 2px;\n"
+                                      "border-style: solid;\n"
+                                      "border-radius: 20px;\n"
+                                      "background-color: rgba(255, 255, 255, 0);\n"
+                                      "")
+        self.w4_frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w4_frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w4_label_6 = QtWidgets.QLabel("Розваги та\nнавчання", self.w4_frame_3)
+        self.w4_label_6.setGeometry(QtCore.QRect(0, 130, 201, 51))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w4_label_6.setFont(font)
+        self.w4_label_6.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_6.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_label_frame_3 = QtWidgets.QLabel(self.w4_frame_3)
+        self.w4_label_frame_3.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Розваги.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Розваги_new.png")
+        self.w4_label_frame_3.setPixmap(QtGui.QPixmap("Розваги_new.png"))
+
+        self.w4_label_7 = QtWidgets.QLabel("Робот може грати з вами\n"
+                                           "в ігри, читати книжки,\n"
+                                           "розповідати цікаві та\n"
+                                           "смішні історії, а також\n"
+                                           "може допомогти з\n"
+                                           "навчанням та пояснити\n"
+                                           "незрозумілий матеріал.", self.w4_frame_3)
+        self.w4_label_7.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w4_label_7.setFont(font)
+        self.w4_label_7.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_7.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_frame_4 = QtWidgets.QFrame(self.widget_4_1)
+        self.w4_frame_4.setGeometry(QtCore.QRect(740, 160, 201, 315))
+        self.w4_frame_4.setStyleSheet("border-color: rgb(255,255,255);\n"
+                                      "border-width: 2px;\n"
+                                      "border-style: solid;\n"
+                                      "border-radius: 20px;\n"
+                                      "background-color: rgba(255, 255, 255, 0);\n"
+                                      "")
+        self.w4_frame_4.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.w4_frame_4.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        self.w4_label_8 = QtWidgets.QLabel("Турбота про життя\nта здоров'я", self.w4_frame_4)
+        self.w4_label_8.setGeometry(QtCore.QRect(0, 130, 201, 51))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(11)
+        self.w4_label_8.setFont(font)
+        self.w4_label_8.setStyleSheet("background-color: rgb(255,142, 72);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_8.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_label_frame_4 = QtWidgets.QLabel(self.w4_frame_4)
+        self.w4_label_frame_4.setGeometry(QtCore.QRect(50, 20, 100, 100))
+        original_image = Image.open("Здоров'я.png")
+        enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+        enhanced_image.save("Здоров'я_new.png")
+        self.w4_label_frame_4.setPixmap(QtGui.QPixmap("Здоров'я_new.png"))
+
+        self.w4_label_9 = QtWidgets.QLabel("Робот може нагадувати\n"
+                                           "про прийом ліків або\n"
+                                           "надати першу медичну\n"
+                                           "допомогу. Також робот\n"
+                                           "може стати чудовим\n"
+                                           "тілоохоронцем.", self.w4_frame_4)
+        self.w4_label_9.setGeometry(QtCore.QRect(0, 180, 201, 131))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(9)
+        self.w4_label_9.setFont(font)
+        self.w4_label_9.setStyleSheet("background-color: rgba(255,142, 72, 0);\n"
+                                      "border-color: rgba(255, 255, 255, 0);\n"
+                                      "color: rgb(255, 255, 255);\n"
+                                      "border-radius: 0px;")
+        self.w4_label_9.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w4_button_next = QtWidgets.QPushButton("ДАЛІ", self.widget_4)
+        self.w4_button_next.setGeometry(QtCore.QRect(586, 720, 150, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w4_button_next.setFont(font)
+        self.w4_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                                QPushButton {
+                                                    background-color: rgb(255, 145, 72);
+                                                    color: rgb(255, 255, 255);
+                                                    border-radius: 20px;
+                                                }
+                                                QPushButton:hover {
+                                                    background-color: rgb(255, 230, 203);
+                                                    color: rgb(255, 145, 72);
+                                                }
+                                                """
+        self.w4_button_next.setStyleSheet(style)
+
+    def setup_widget_5(self):
+        self.widget_5_1 = QtWidgets.QWidget(self.widget_5)
+        self.widget_5_1.setGeometry(QtCore.QRect(150, 150, 1000, 541))
+        self.widget_5_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 20px;\n"
+                                      "")
+
+        self.widget_5_2 = QtWidgets.QWidget(self.widget_5)
+        self.widget_5_2.setGeometry(QtCore.QRect(150, 150, 998, 541))
+        self.widget_5_2.setStyleSheet("background-color: rgba(6, 37, 109, 0);\n"
+                                      "")
+
+        self.w5_label_1 = QtWidgets.QLabel("ОБЕРІТЬ ПАРАМЕТРИ РОБОТА", self.widget_5_2)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        self.w5_label_1.setFont(font)
+        self.w5_label_1.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                      "background-color: rgba(255, 255, 255, 0);")
+        self.w5_label_1.move(260, 25)
+        self.w5_label_1.adjustSize()
+
+        self.w5_label_gender = QtWidgets.QLabel("Пол", self.widget_5_2)
+        self.w5_label_gender.setGeometry(QtCore.QRect(55, 95, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_gender.setFont(font)
+        self.w5_label_gender.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w5_label_gender.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_radioButton_f = QtWidgets.QRadioButton("ж", self.widget_5_2)
+        self.w5_radioButton_f.setGeometry(QtCore.QRect(105, 151, 45, 20))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        self.w5_radioButton_f.setFont(font)
+        self.w5_radioButton_f.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_radioButton_f.setStyleSheet("background-color: rgba(6, 37, 109, 0);\n"
+                                            "color: rgb(255, 255, 255);")
+
+        self.w5_radioButton_m = QtWidgets.QRadioButton("ч", self.widget_5_2)
+        self.w5_radioButton_m.setGeometry(QtCore.QRect(205, 151, 45, 20))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        self.w5_radioButton_m.setFont(font)
+        self.w5_radioButton_m.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_radioButton_m.setStyleSheet("background-color: rgba(6, 37, 109, 0);\n"
+                                            "color: rgb(255, 255, 255);")
+
+        self.w5_label_height = QtWidgets.QLabel("Зріст", self.widget_5_2)
+        self.w5_label_height.setGeometry(QtCore.QRect(55, 197, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_height.setFont(font)
+        self.w5_label_height.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w5_label_height.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_height = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_height.setGeometry(QtCore.QRect(55, 253, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_height.setFont(font)
+        self.w5_comboBox_height.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_height.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_height.addItems(["100 см", "120 см", "140 см", "160 см", "180 см", "200 см", "220 см"])
+
+        self.w5_label_strength = QtWidgets.QLabel("Міцність", self.widget_5_2)
+        self.w5_label_strength.setGeometry(QtCore.QRect(55, 299, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_strength.setFont(font)
+        self.w5_label_strength.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                             "border-color: rgb(255, 145, 72);\n"
+                                             "border-width: 2px;\n"
+                                             "border-style: solid;\n"
+                                             "color: rgb(255, 255, 255);\n"
+                                             "border-radius: 20px;")
+        self.w5_label_strength.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_strength = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_strength.setGeometry(QtCore.QRect(55, 355, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_strength.setFont(font)
+        self.w5_comboBox_strength.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_strength.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_strength.addItems(["Звичайна", "Збільшена", "Бронезахист"])
+
+        self.w5_label_carrying_capacity = QtWidgets.QLabel("Вантажопідйомність", self.widget_5_2)
+        self.w5_label_carrying_capacity.setGeometry(QtCore.QRect(55, 401, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_carrying_capacity.setFont(font)
+        self.w5_label_carrying_capacity.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                                      "border-color: rgb(255, 145, 72);\n"
+                                                      "border-width: 2px;\n"
+                                                      "border-style: solid;\n"
+                                                      "color: rgb(255, 255, 255);\n"
+                                                      "border-radius: 20px;")
+        self.w5_label_carrying_capacity.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_carrying_capacity = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_carrying_capacity.setGeometry(QtCore.QRect(55, 457, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_carrying_capacity.setFont(font)
+        self.w5_comboBox_carrying_capacity.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_carrying_capacity.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_carrying_capacity.addItems(["100 кг", "300 кг", "500 кг", "1000 кг"])
+
+        self.w5_label_skin_color = QtWidgets.QLabel("Раса", self.widget_5_2)
+        self.w5_label_skin_color.setGeometry(QtCore.QRect(368, 95, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_skin_color.setFont(font)
+        self.w5_label_skin_color.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                               "border-color: rgb(255, 145, 72);\n"
+                                               "border-width: 2px;\n"
+                                               "border-style: solid;\n"
+                                               "color: rgb(255, 255, 255);\n"
+                                               "border-radius: 20px;")
+        self.w5_label_skin_color.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_skin_color = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_skin_color.setGeometry(QtCore.QRect(368, 151, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_skin_color.setFont(font)
+        self.w5_comboBox_skin_color.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_skin_color.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_skin_color.addItems(["Європеоїдна", "Негроїдна"])
+
+        self.w5_label_eye_color = QtWidgets.QLabel("Колір очей", self.widget_5_2)
+        self.w5_label_eye_color.setGeometry(QtCore.QRect(368, 197, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_eye_color.setFont(font)
+        self.w5_label_eye_color.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                              "border-color: rgb(255, 145, 72);\n"
+                                              "border-width: 2px;\n"
+                                              "border-style: solid;\n"
+                                              "color: rgb(255, 255, 255);\n"
+                                              "border-radius: 20px;")
+        self.w5_label_eye_color.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_eye_color = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_eye_color.setGeometry(QtCore.QRect(368, 253, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_eye_color.setFont(font)
+        self.w5_comboBox_eye_color.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_eye_color.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_eye_color.addItems(["Голубий", "Зелений", "Карий"])
+
+        self.w5_label_hair_color = QtWidgets.QLabel("Колір волосся", self.widget_5_2)
+        self.w5_label_hair_color.setGeometry(QtCore.QRect(368, 299, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_hair_color.setFont(font)
+        self.w5_label_hair_color.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                               "border-color: rgb(255, 145, 72);\n"
+                                               "border-width: 2px;\n"
+                                               "border-style: solid;\n"
+                                               "color: rgb(255, 255, 255);\n"
+                                               "border-radius: 20px;")
+        self.w5_label_hair_color.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_hair_color = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_hair_color.setGeometry(QtCore.QRect(368, 355, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_hair_color.setFont(font)
+        self.w5_comboBox_hair_color.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_hair_color.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_hair_color.addItems(["Чорний", "Коричневий", "Рудий", "Блонд"])
+
+        self.w5_label_hair_length = QtWidgets.QLabel("Довжина волосся", self.widget_5_2)
+        self.w5_label_hair_length.setGeometry(QtCore.QRect(368, 401, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_hair_length.setFont(font)
+        self.w5_label_hair_length.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                                "border-color: rgb(255, 145, 72);\n"
+                                                "border-width: 2px;\n"
+                                                "border-style: solid;\n"
+                                                "color: rgb(255, 255, 255);\n"
+                                                "border-radius: 20px;")
+        self.w5_label_hair_length.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_hair_length = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_hair_length.setGeometry(QtCore.QRect(368, 457, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_hair_length.setFont(font)
+        self.w5_comboBox_hair_length.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_hair_length.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_hair_length.addItems(["Коротке", "Довге"])
+
+        self.w5_label_series = QtWidgets.QLabel("Серія", self.widget_5_2)
+        self.w5_label_series.setGeometry(QtCore.QRect(681, 95, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_series.setFont(font)
+        self.w5_label_series.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w5_label_series.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_series = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_series.setGeometry(QtCore.QRect(681, 151, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_series.setFont(font)
+        self.w5_comboBox_series.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_series.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.w5_comboBox_series.addItems(["Бюджетна", "Середня", "Топ"])
+
+        self.w5_label_memory = QtWidgets.QLabel("Пам'ять", self.widget_5_2)
+        self.w5_label_memory.setGeometry(QtCore.QRect(681, 197, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_memory.setFont(font)
+        self.w5_label_memory.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w5_label_memory.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_memory = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_memory.setGeometry(QtCore.QRect(681, 253, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_memory.setFont(font)
+        self.w5_comboBox_memory.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_memory.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w5_comboBox_memory.addItems(["1 ТБ", "2 ТБ", "3 ТБ", "4 ТБ", "5 ТБ"])
+
+        self.w5_label_battery = QtWidgets.QLabel("Ємність акумулятора", self.widget_5_2)
+        self.w5_label_battery.setGeometry(QtCore.QRect(681, 299, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_battery.setFont(font)
+        self.w5_label_battery.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                            "border-color: rgb(255, 145, 72);\n"
+                                            "border-width: 2px;\n"
+                                            "border-style: solid;\n"
+                                            "color: rgb(255, 255, 255);\n"
+                                            "border-radius: 20px;")
+        self.w5_label_battery.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_battery = QtWidgets.QComboBox(self.widget_5_2)
+        self.w5_comboBox_battery.setGeometry(QtCore.QRect(681, 355, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_comboBox_battery.setFont(font)
+        self.w5_comboBox_battery.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_comboBox_battery.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w5_comboBox_battery.addItems(
+            ["10000 мАгод", "15000 мАгод", "20000 мАгод", "25000 мАгод", "30000 мАгод"])
+
+        self.w5_label_plus_features = QtWidgets.QLabel("Додаткові можливості", self.widget_5_2)
+        self.w5_label_plus_features.setGeometry(QtCore.QRect(681, 401, 251, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_plus_features.setFont(font)
+        self.w5_label_plus_features.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                                  "border-color: rgb(255, 145, 72);\n"
+                                                  "border-width: 2px;\n"
+                                                  "border-style: solid;\n"
+                                                  "color: rgb(255, 255, 255);\n"
+                                                  "border-radius: 20px;")
+        self.w5_label_plus_features.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_checkBox_plus_features_1 = QtWidgets.QCheckBox("Захист від вологи", self.widget_5_2)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_checkBox_plus_features_1.setFont(font)
+        self.w5_checkBox_plus_features_1.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_checkBox_plus_features_1.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                                       "color: rgb(255, 255, 255);")
+        self.w5_checkBox_plus_features_1.move(681, 452)
+        self.w5_checkBox_plus_features_1.adjustSize()
+
+        self.w5_checkBox_plus_features_2 = QtWidgets.QCheckBox("NFC-чіп", self.widget_5_2)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w5_checkBox_plus_features_2.setFont(font)
+        self.w5_checkBox_plus_features_2.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w5_checkBox_plus_features_2.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                                       "color: rgb(255, 255, 255);")
+        self.w5_checkBox_plus_features_2.move(681, 483)
+        self.w5_checkBox_plus_features_2.adjustSize()
+
+        self.widget_5_4 = QtWidgets.QWidget(self.widget_5)
+        self.widget_5_4.setGeometry(QtCore.QRect(506, 720, 282, 80))
+        self.widget_5_4.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 20px;")
+
+        self.w5_label_price = QtWidgets.QLabel("Ціна", self.widget_5_4)
+        self.w5_label_price.setGeometry(QtCore.QRect(20, 20, 81, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w5_label_price.setFont(font)
+        self.w5_label_price.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                          "border-color: rgb(255, 145, 72);\n"
+                                          "border-width: 2px;\n"
+                                          "border-style: solid;\n"
+                                          "color: rgb(255, 255, 255);\n"
+                                          "border-radius: 20px;")
+        self.w5_label_price.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_label_price_number = QtWidgets.QLabel("500000", self.widget_5_4)
+        self.w5_label_price_number.setGeometry(QtCore.QRect(120, 20, 121, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setItalic(True)
+        self.w5_label_price_number.setFont(font)
+        self.w5_label_price_number.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                                 "color: rgb(255, 145, 72);")
+        self.w5_label_price_number.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_label_price_symbol = QtWidgets.QLabel("₴", self.widget_5_4)
+        self.w5_label_price_symbol.setGeometry(QtCore.QRect(241, 20, 41, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        self.w5_label_price_symbol.setFont(font)
+        self.w5_label_price_symbol.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                                 "color: rgb(255, 145, 72);")
+        self.w5_label_price_symbol.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w5_comboBox_strength.currentIndexChanged.connect(self.update_price)
+        self.w5_comboBox_carrying_capacity.currentIndexChanged.connect(self.update_price)
+        self.w5_comboBox_series.currentIndexChanged.connect(self.update_price)
+        self.w5_comboBox_memory.currentIndexChanged.connect(self.update_price)
+        self.w5_comboBox_battery.currentIndexChanged.connect(self.update_price)
+        self.w5_checkBox_plus_features_1.stateChanged.connect(self.update_price)
+        self.w5_checkBox_plus_features_2.stateChanged.connect(self.update_price)
+
+        self.w5_button_next = QtWidgets.QPushButton("ПРИДБАТИ", self.widget_5)
+        self.w5_button_next.setGeometry(QtCore.QRect(556, 820, 183, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w5_button_next.setFont(font)
+        self.w5_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                QPushButton {
+                                    background-color: rgb(255, 145, 72);
+                                    color: rgb(255, 255, 255);
+                                    border-radius: 20px;
+                                }
+                                QPushButton:hover {
+                                    background-color: rgb(255, 230, 203);
+                                    color: rgb(255, 145, 72);
+                                }
+                                """
+        self.w5_button_next.setStyleSheet(style)
+
+    def setup_widget_6(self):
+        self.widget_6_1 = QtWidgets.QWidget(self.widget_6)
+        self.widget_6_1.setGeometry(QtCore.QRect(730, 200, 390, 512))
+        self.widget_6_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 20px;")
+
+        self.w6_label_1 = QtWidgets.QLabel("Вітаємо! Від тепер це Ваш персональний робот.", self.widget_6)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        font.setBold(True)
+        self.w6_label_1.setFont(font)
+        self.w6_label_1.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                              "background-color: rgba(255, 255, 255, 0);")
+        self.w6_label_1.adjustSize()
+        self.w6_label_1.move(210, 80)
+
+        self.w6_label_2 = QtWidgets.QLabel("ПАРАМЕТРИ РОБОТА", self.widget_6_1)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        self.w6_label_2.setFont(font)
+        self.w6_label_2.adjustSize()
+        self.w6_label_2.move(30, 20)
+        self.w6_label_2.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                        "background-color: rgba(255, 255, 255, 0);")
+
+        self.photo_label = QtWidgets.QLabel(self.widget_6)
+        self.photo_label.setGeometry(QtCore.QRect(180, 200, 512, 512))
+
+        self.info_label = QtWidgets.QLabel(self.widget_6_1)
+        self.info_label.setGeometry(QtCore.QRect(20, 20, 370, 550))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.info_label.setFont(font)
+        self.info_label.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                      "background-color: rgba(255, 255, 255, 0);")
+        self.update_photo()
+
+        self.w6_button_next = QtWidgets.QPushButton("ДАЛІ", self.widget_6)
+        self.w6_button_next.setGeometry(QtCore.QRect(570, 820, 150, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w6_button_next.setFont(font)
+        self.w6_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                QPushButton {
+                                    background-color: rgb(255, 145, 72);
+                                    color: rgb(255, 255, 255);
+                                    border-radius: 20px;
+                                }
+                                QPushButton:hover {
+                                    background-color: rgb(255, 230, 203);
+                                    color: rgb(255, 145, 72);
+                                }
+                                """
+        self.w6_button_next.setStyleSheet(style)
+
+    def setup_widget_7(self):
+        self.widget_7_1 = QtWidgets.QWidget(self.widget_7)
+        self.widget_7_1.setGeometry(QtCore.QRect(200, 300, 920, 220))
+        self.widget_7_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 25px;")
+
+        self.w7_label_1 = QtWidgets.QLabel(
+            "Запрошуємо Вас пройти опитування", self.widget_7)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        font.setBold(True)
+        self.w7_label_1.setFont(font)
+        self.w7_label_1.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                           "background-color: rgba(255, 255, 255, 0);")
+        self.w7_label_1.adjustSize()
+        self.w7_label_1.move(340, 150)
+        self.w7_label_1.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w7_label_2 = QtWidgets.QLabel(
+            "Ми використовуємо опитування, щоб зібрати важливу інформацію про\n"
+            "наших користувачів. Ця інформація допоможе краще зрозуміти\n"
+            "наших клієнтів, а також вдосконалити нашу роботу для Вас.\n\n"
+            "Опитування займе лише декілька хвилин Вашого часу.", self.widget_7_1)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w7_label_2.setFont(font)
+        self.w7_label_2.setAlignment(QtCore.Qt.AlignLeft)
+        self.w7_label_2.adjustSize()
+        self.w7_label_2.move(30, 30)
+        self.w7_label_2.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                      "color: rgb(255, 255, 255);")
+        self.w7_label_2.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w7_button_refuse = QtWidgets.QPushButton("ПРОПУСТИТИ", self.widget_7)
+        self.w7_button_refuse.setGeometry(QtCore.QRect(350, 510, 210, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w7_button_refuse.setFont(font)
+        self.w7_button_refuse.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                QPushButton {
+                                    background-color: rgb(255, 145, 72);
+                                    color: rgb(255, 255, 255);
+                                    border-radius: 20px;
+                                }
+                                QPushButton:hover {
+                                    background-color: rgb(255, 230, 203);
+                                    color: rgb(255, 145, 72);
+                                }
+                                """
+        self.w7_button_refuse.setStyleSheet(style)
+
+        self.w7_button_poll = QtWidgets.QPushButton("ОПИТУВАННЯ", self.widget_7)
+        self.w7_button_poll.setGeometry(QtCore.QRect(750, 510, 210, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w7_button_poll.setFont(font)
+        self.w7_button_poll.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                QPushButton {
+                                    background-color: rgb(255, 145, 72);
+                                    color: rgb(255, 255, 255);
+                                    border-radius: 20px;
+                                }
+                                QPushButton:hover {
+                                    background-color: rgb(255, 230, 203);
+                                    color: rgb(255, 145, 72);
+                                }
+                                """
+        self.w7_button_poll.setStyleSheet(style)
+
+    def setup_widget_8(self):
+        self.widget_8_1 = QtWidgets.QWidget(self.widget_8)
+        self.widget_8_1.setGeometry(QtCore.QRect(450, 170, 461, 581))
+        self.widget_8_1.setStyleSheet("background-color: rgba(2, 57, 140, 190);\n"
+                                      "border-radius: 25px;")
+
+        self.widget_8_2 = QtWidgets.QWidget(self.widget_8)
+        self.widget_8_2.setGeometry(QtCore.QRect(450, 170, 461, 581))
+        self.widget_8_2.setStyleSheet("background-color: rgba(0, 0, 0, 0);")
+
+        self.w8_label_1 = QtWidgets.QLabel("ОПИТУВАННЯ", self.widget_8)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(18)
+        font.setBold(True)
+        self.w8_label_1.setFont(font)
+        self.w8_label_1.adjustSize()
+        self.w8_label_1.move(553, 80)
+        self.w8_label_1.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                           "background-color: rgba(255, 255, 255, 0);")
+
+        self.w8_label_2 = QtWidgets.QLabel("ЗАПОВНІТЬ ДАНІ ПРО СЕБЕ", self.widget_8_2)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(16)
+        self.w8_label_2.setFont(font)
+        self.w8_label_2.adjustSize()
+        self.w8_label_2.move(30, 20)
+        self.w8_label_2.setStyleSheet("color: rgb(255, 145, 72);\n"
+                                           "background-color: rgba(255, 255, 255, 0);")
+
+        self.w8_label_gender = QtWidgets.QLabel("Стать", self.widget_8_2)
+        self.w8_label_gender.setGeometry(QtCore.QRect(50, 90, 361, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w8_label_gender.setFont(font)
+        self.w8_label_gender.setAlignment(QtCore.Qt.AlignCenter)
+        self.w8_label_gender.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                         "border-color: rgb(255, 145, 72);\n"
+                                         "border-width: 2px;\n"
+                                         "border-style: solid;\n"
+                                         "color: rgb(255, 255, 255);\n"
+                                         "border-radius: 20px;")
+
+        self.w8_radioButton_f = QtWidgets.QRadioButton("ж", self.widget_8_2)
+        self.w8_radioButton_f.setGeometry(QtCore.QRect(120, 140, 41, 16))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w8_radioButton_f.setFont(font)
+        self.w8_radioButton_f.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w8_radioButton_f.setStyleSheet("background-color: rgba(6, 37, 109, 0);\n"
+                                            "color: rgb(255, 255, 255);")
+
+        self.w8_radioButton_m = QtWidgets.QRadioButton("ч", self.widget_8_2)
+        self.w8_radioButton_m.setGeometry(QtCore.QRect(280, 140, 41, 16))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w8_radioButton_m.setFont(font)
+        self.w8_radioButton_m.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w8_radioButton_m.setStyleSheet("background-color: rgba(6, 37, 109, 0);\n"
+                                            "color: rgb(255, 255, 255);")
+
+        self.w8_label_age = QtWidgets.QLabel("Вік", self.widget_8_2)
+        self.w8_label_age.setGeometry(QtCore.QRect(50, 166, 361, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w8_label_age.setFont(font)
+        self.w8_label_age.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                        "border-color: rgb(255, 145, 72);\n"
+                                        "border-width: 2px;\n"
+                                        "border-style: solid;\n"
+                                        "color: rgb(255, 255, 255);\n"
+                                        "border-radius: 20px;")
+        self.w8_label_age.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w8_label_age_number = QtWidgets.QLabel(self.widget_8_2)
+        self.w8_label_age_number.setGeometry(QtCore.QRect(370, 216, 41, 19))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        font.setBold(True)
+        self.w8_label_age_number.setFont(font)
+        self.w8_label_age_number.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                               "color: rgb(255, 255, 255);")
+        self.w8_label_age_number.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w8_horizontalSlider_age = QtWidgets.QSlider(self.widget_8_2)
+        self.w8_horizontalSlider_age.setGeometry(QtCore.QRect(50, 216, 310, 19))
+        self.w8_horizontalSlider_age.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w8_horizontalSlider_age.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.w8_horizontalSlider_age.setOrientation(QtCore.Qt.Horizontal)
+        self.w8_horizontalSlider_age.setMinimum(18)
+        self.w8_horizontalSlider_age.setMaximum(99)
+        self.w8_horizontalSlider_age.valueChanged.connect(self.update_age_label)
+
+        self.w8_label_height = QtWidgets.QLabel("Зріст", self.widget_8_2)
+        self.w8_label_height.setGeometry(QtCore.QRect(50, 245, 361, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w8_label_height.setFont(font)
+        self.w8_label_height.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w8_label_height.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w8_label_height_number = QtWidgets.QLabel(self.widget_8_2)
+        self.w8_label_height_number.setGeometry(QtCore.QRect(370, 295, 41, 21))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        font.setBold(True)
+        self.w8_label_height_number.setFont(font)
+        self.w8_label_height_number.setStyleSheet("background-color: rgba(255, 255, 255, 0);\n"
+                                                  "color: rgb(255, 255, 255);")
+        self.w8_label_height_number.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w8_horizontalSlider_height = QtWidgets.QSlider(self.widget_8_2)
+        self.w8_horizontalSlider_height.setGeometry(QtCore.QRect(50, 295, 310, 19))
+        self.w8_horizontalSlider_height.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w8_horizontalSlider_height.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.w8_horizontalSlider_height.setOrientation(QtCore.Qt.Horizontal)
+        self.w8_horizontalSlider_height.setMinimum(100)
+        self.w8_horizontalSlider_height.setMaximum(220)
+        self.w8_horizontalSlider_height.valueChanged.connect(self.update_height_label)
+
+        self.w8_label_choice = QtWidgets.QLabel("Параметри робота обиралися\n"
+                                                "(здебільшого) орієнтуючись на:", self.widget_8_2)
+        self.w8_label_choice.setGeometry(QtCore.QRect(50, 324, 361, 70))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w8_label_choice.setFont(font)
+        self.w8_label_choice.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w8_label_choice.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w8_comboBox_choice = QtWidgets.QComboBox(self.widget_8_2)
+        self.w8_comboBox_choice.setGeometry(QtCore.QRect(50, 404, 361, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w8_comboBox_choice.setFont(font)
+        self.w8_comboBox_choice.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w8_comboBox_choice.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w8_comboBox_choice.addItems(["Вартість", "Потреби і вподобання", "Те, що в моді", "Інше"])
+
+        self.w8_label_reason = QtWidgets.QLabel("Причина купівлі робота-друга", self.widget_8_2)
+        self.w8_label_reason.setGeometry(QtCore.QRect(50, 455, 361, 40))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(12)
+        self.w8_label_reason.setFont(font)
+        self.w8_label_reason.setStyleSheet("background-color: rgba(255, 125, 38, 0);\n"
+                                           "border-color: rgb(255, 145, 72);\n"
+                                           "border-width: 2px;\n"
+                                           "border-style: solid;\n"
+                                           "color: rgb(255, 255, 255);\n"
+                                           "border-radius: 20px;")
+        self.w8_label_reason.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w8_comboBox_reason = QtWidgets.QComboBox(self.widget_8_2)
+        self.w8_comboBox_reason.setGeometry(QtCore.QRect(50, 505, 361, 41))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        self.w8_comboBox_reason.setFont(font)
+        self.w8_comboBox_reason.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.w8_comboBox_reason.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        self.w8_comboBox_reason.addItems(["Відчуття самотності", "Потреба у підтримці", "Інтерес до технологій",
+                                          "Потрібен помічник", "Недовіра до людей", "Побоювання людей",
+                                          "Потрібен тілоохоронець", "Щоб бути модним", "Інше"])
+
+        self.w8_button_next = QtWidgets.QPushButton("ДАЛІ", self.widget_8)
+        self.w8_button_next.setGeometry(QtCore.QRect(610, 743, 150, 61))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(15)
+        font.setBold(True)
+        self.w8_button_next.setFont(font)
+        self.w8_button_next.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                        QPushButton {
+                                            background-color: rgb(255, 145, 72);
+                                            color: rgb(255, 255, 255);
+                                            border-radius: 20px;
+                                        }
+                                        QPushButton:hover {
+                                            background-color: rgb(255, 230, 203);
+                                            color: rgb(255, 145, 72);
+                                        }
+                                        """
+        self.w8_button_next.setStyleSheet(style)
+
+    def update_age_label(self, value):
+        self.w8_label_age_number.setText(str(value))
+
+    def update_height_label(self, value):
+        self.w8_label_height_number.setText(str(value))
+
+    def setup_widget_9(self):
+        self.w9_label_1 = QtWidgets.QLabel("ДЯКУЄМО, ЩО ОБРАЛИ НАС!\nГАРНОГО ДНЯ!", self.widget_9)
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(35)
+        font.setBold(True)
+        self.w9_label_1.setFont(font)
+        self.w9_label_1.setStyleSheet("color: rgb(0, 0, 0);\n"
+                                           "background-color: rgba(255, 255, 255, 0);")
+        self.w9_label_1.adjustSize()
+        self.w9_label_1.move(200, 350)
+        self.w9_label_1.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.w9_button_end = QtWidgets.QPushButton("ЗАВЕРШИТИ\nРОБОТУ", self.widget_9)
+        self.w9_button_end.setGeometry(QtCore.QRect(280, 550, 301, 81))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w9_button_end.setFont(font)
+        self.w9_button_end.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                                QPushButton {
+                                                    background-color: rgb(255, 145, 72);
+                                                    color: rgb(255, 255, 255);
+                                                    border-radius: 20px;
+                                                }
+                                                QPushButton:hover {
+                                                    background-color: rgb(255, 230, 203);
+                                                    color: rgb(255, 145, 72);
+                                                }
+                                                """
+        self.w9_button_end.setStyleSheet(style)
+
+        self.w9_button_return_to_w1 = QtWidgets.QPushButton("ПОВЕРНУТИСЯ\nНА ГОЛОВНУ", self.widget_9)
+        self.w9_button_return_to_w1.setGeometry(QtCore.QRect(725, 550, 301, 81))
+        font = QtGui.QFont()
+        font.setFamily("Verdana")
+        font.setPointSize(14)
+        font.setBold(True)
+        self.w9_button_return_to_w1.setFont(font)
+        self.w9_button_return_to_w1.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        style = """
+                                                QPushButton {
+                                                    background-color: rgb(255, 145, 72);
+                                                    color: rgb(255, 255, 255);
+                                                    border-radius: 20px;
+                                                }
+                                                QPushButton:hover {
+                                                    background-color: rgb(255, 230, 203);
+                                                    color: rgb(255, 145, 72);
+                                                }
+                                                """
+        self.w9_button_return_to_w1.setStyleSheet(style)
+
+    def show_widget_2(self):
+        self.widget_1.setVisible(False)
+        self.widget_2.setVisible(True)
+
+    def show_widget_3(self):
+        self.pib = self.w2_textEdit_pib.toPlainText()
+        self.number = self.w2_textEdit_number.toPlainText()
+        self.city = self.w2_textEdit_city.toPlainText()
+        self.email = self.w2_textEdit_email.toPlainText()
+        if not (self.pib and self.number and self.city and self.email):
+            QtWidgets.QMessageBox.warning(self, "Помилка", "Будь ласка, заповніть всі поля.")
+        else:
+            if not re.match(r'^[А-ЯІЇЄҐ\'’][а-яіїєґ\'’]+\s[А-ЯІЇЄҐ\'’][а-яіїєґ\'’]+\s[А-ЯІЇЄҐ\'’][а-яіїєґ\'’]+$', self.pib):
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                                              "Будь ласка, перевірте правильність введення ПІБ")
+                return
+            if not re.match(r'^380\d{9}$', self.number):
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                    "Будь ласка, введіть коректний номер телефону у форматі 380XXXXXXXXX")
+                return
+            if not re.match(r'^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$', self.email):
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                                              "Будь ласка, перевірте правильність введення email")
+                return
+            if not re.match(r'^[А-ЯЇЄІҐ][а-яїєіґ]+$', self.city):
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                                              "Будь ласка, перевірте правильність введення міста")
+                return
+
+            self.widget_2.setVisible(False)
+            self.widget_3.setVisible(True)
+            try:
+                with open('user_data_1.csv', 'a', newline='', encoding='utf-8') as file:
+                    writer = csv.writer(file)
+                    if file.tell() == 0:
+                        writer.writerow(['ПІБ', 'Номер телефону', 'Email', 'Місто'])
+                    writer.writerow([self.pib, self.number, self.email, self.city])
+            except Exception as e:
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                                              f"Помилка при записі в файл: {str(e)}")
+
+    def show_widget_4(self):
+        self.widget_3.setVisible(False)
+        self.widget_4.setVisible(True)
+
+    def show_widget_5(self):
+        self.widget_4.setVisible(False)
+        self.widget_5.setVisible(True)
+
+    def update_info_label(self):
+        if self.robot:
+            info_text = str(self.robot)
+            self.info_label.setText(info_text)
+
+    def selected_options(self):
+        self.gender = "ж" if self.w5_radioButton_f.isChecked() else "ч"
+        self.height = self.w5_comboBox_height.currentText()
+        self.strength = self.w5_comboBox_strength.currentText()
+        self.carrying_capacity = self.w5_comboBox_carrying_capacity.currentText()
+        self.skin_color = self.w5_comboBox_skin_color.currentText()
+        self.eye_color = self.w5_comboBox_eye_color.currentText()
+        self.hair_length = self.w5_comboBox_hair_length.currentText()
+        self.hair_color = self.w5_comboBox_hair_color.currentText()
+        self.series = self.w5_comboBox_series.currentText()
+        self.memory = self.w5_comboBox_memory.currentText()
+        self.battery = self.w5_comboBox_battery.currentText()
+        self.plus_features = []
+        if self.w5_checkBox_plus_features_1.isChecked():
+            self.plus_features.append("Захист від вологи")
+        if self.w5_checkBox_plus_features_2.isChecked():
+            self.plus_features.append("NFC-чіп")
+
+    def show_widget_6(self):
+        reply = QtWidgets.QMessageBox.question(self, 'Впевнені у своєму виборі?',
+                                               "Ви впевнені, що хочете зберегти ці параметри?",
+                                               QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.widget_5.setVisible(False)
+            self.widget_6.setVisible(True)
+            self.selected_options()
+
+            self.robot = Robot(self.gender, self.height, self.strength, self.carrying_capacity, self.skin_color,
+                               self.eye_color, self.hair_length, self.hair_color, self.series, self.memory,
+                               self.battery, self.plus_features)
+
+            self.update_photo()
+            self.update_info_label()
+            data = [self.gender, self.height.split()[0], self.strength, self.carrying_capacity.split()[0], self.skin_color,
+                    self.eye_color, self.hair_color, self.hair_length, self.series, self.memory.split()[0],
+                    self.battery.split()[0], ', '.join(self.plus_features), str(self.total_price)]
+            try:
+                with open('robot_data.csv', 'a', newline='', encoding='utf-8') as file:
+                    writer = csv.writer(file)
+                    if file.tell() == 0:
+                        writer.writerow(["Стать робота", "Зріст робота", "Міцність робота", "Вантажопідйомність робота",
+                                         "Колір шкіри робота", "Колір очей робота", "Колір волосся робота",
+                                         "Довжина волосся робота", "Серія робота", "Пам'ять робота",
+                                         "Ємність акумулятора робота", "Додаткові можливості робота",
+                                         "Вартість робота"])
+                    writer.writerow(data)
+            except Exception as e:
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                                              f"Помилка при записі в файл: {str(e)}")
+
+    def update_price(self):
+        self.selected_options()
+
+        self.total_price = PriceCalculator.calculate_price(self, self.gender, self.height, self.strength,
+                                                           self.carrying_capacity, self.skin_color, self.eye_color,
+                                                           self.hair_length, self.hair_color, self.series, self.memory,
+                                                           self.battery, self.plus_features)
+
+        self.w5_label_price_number.setText(str(self.total_price))
+
+    def update_photo(self):
+        if self.robot:
+            gender = self.robot.gender
+            skin_color = self.robot.skin_color
+            eye_color = self.robot.eye_color
+            hair_length = self.robot.hair_length
+            hair_color = self.robot.hair_color
+            if gender == "ж":
+                if skin_color == "Європеоїдна":
+                    if eye_color == "Голубий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_1.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_1_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_1_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_2.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_2_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_2_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_3.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_3_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_3_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_4.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_4_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_4_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_5.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_5_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_5_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_6.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_6_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_6_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_7.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_7_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_7_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_8.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_8_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_8_new.png"))
+                    elif eye_color == "Карий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_9.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_9_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_9_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_10.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_10_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_10_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_11.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_11_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_11_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_12.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_12_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_12_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_13.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_13_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_13_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_14.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_14_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_14_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_15.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_15_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_15_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_16.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_16_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_16_new.png"))
+                    elif eye_color == "Зелений":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_17.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_17_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_17_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_18.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_18_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_18_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_19.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_19_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_19_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_20.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_20_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_20_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_21.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_21_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_21_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_22.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_22_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_22_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_23.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_23_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_23_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_24.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_24_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_24_new.png"))
+                elif skin_color == "Негроїдна":
+                    if eye_color == "Голубий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_25.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_25_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_25_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_26.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_26_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_26_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_27.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_27_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_27_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_28.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_28_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_28_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_29.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_29_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_29_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_30.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_30_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_30_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_31.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_31_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_31_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_32.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_32_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_32_new.png"))
+                    elif eye_color == "Карий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_33.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_33_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_33_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_34.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_34_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_34_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_35.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_35_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_35_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_36.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_36_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_36_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_37.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_37_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_37_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_38.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_38_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_38_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_39.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_39_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_39_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_40.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_40_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_40_new.png"))
+                    elif eye_color == "Зелений":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_41.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_41_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_41_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_42.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_42_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_42_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_43.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_43_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_43_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_44.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_44_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_44_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_45.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_45_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_45_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_46.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_46_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_46_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_47.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_47_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_47_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_48.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_48_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_48_new.png"))
+            elif gender == "ч":
+                if skin_color == "Європеоїдна":
+                    if eye_color == "Голубий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_49.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_49_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_49_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_50.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_50_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_50_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_51.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_51_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_51_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_52.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_52_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_52_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_53.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_53_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_53_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_54.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_54_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_54_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_55.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_55_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_55_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_56.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_56_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_56_new.png"))
+                    elif eye_color == "Карий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_57.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_57_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_57_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_58.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_58_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_58_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_59.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_59_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_59_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_60.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_60_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_60_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_61.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_61_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_61_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_62.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_62_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_62_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_63.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_63_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_63_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_64.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_64_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_64_new.png"))
+                    elif eye_color == "Зелений":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_65.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_65_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_65_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_66.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_66_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_66_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_67.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_67_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_67_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_68.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_68_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_68_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_69.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_69_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_69_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_70.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_70_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_70_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_71.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_71_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_71_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_72.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_72_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_72_new.png"))
+                elif skin_color == "Негроїдна":
+                    if eye_color == "Голубий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_73.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_73_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_73_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_74.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_74_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_74_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_75.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_75_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_75_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_76.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_76_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_76_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_77.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_77_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_77_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_78.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_78_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_78_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_79.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_79_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_79_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_80.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_80_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_80_new.png"))
+                    elif eye_color == "Карий":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_81.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_81_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_81_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_82.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_82_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_82_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_83.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_83_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_83_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_84.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_84_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_84_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_85.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_85_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_85_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_86.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_86_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_86_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_87.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_87_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_87_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_88.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_88_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_88_new.png"))
+                    elif eye_color == "Зелений":
+                        if hair_length == "Коротке":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_89.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_89_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_89_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_90.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_90_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_90_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_91.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_91_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_91_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_92.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_92_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_92_new.png"))
+                        elif hair_length == "Довге":
+                            if hair_color == "Чорний":
+                                original_image = Image.open("photo_93.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_93_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_93_new.png"))
+                            elif hair_color == "Коричневий":
+                                original_image = Image.open("photo_94.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_94_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_94_new.png"))
+                            elif hair_color == "Рудий":
+                                original_image = Image.open("photo_95.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_95_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_95_new.png"))
+                            elif hair_color == "Блонд":
+                                original_image = Image.open("photo_96.png")
+                                enhanced_image = ImageEnhance.Sharpness(original_image).enhance(2.0)
+                                enhanced_image.save("photo_96_new.png")
+                                self.photo_label.setPixmap(QtGui.QPixmap("photo_96_new.png"))
+
+    def skip_poll(self):
+        reply = QtWidgets.QMessageBox.question(self, 'Підтвердження',
+                                               "Ви впевнені, що хочете пропустити опитування?",
+                                               QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            data = ['', '', '', '', '', '']
+            self.widget_7.setVisible(False)
+            self.widget_9.setVisible(True)
+            try:
+                with open('user_data_2.csv', 'a', newline='', encoding='utf-8') as file:
+                    writer = csv.writer(file)
+                    if file.tell() == 0:
+                        writer.writerow(['Стать', 'Вік', 'Зріст', 'Вибір', 'Причина'])
+                    writer.writerow(data)
+            except Exception as e:
+                QtWidgets.QMessageBox.warning(self, "Помилка",
+                                              f"Помилка при записі в файл: {str(e)}")
+
+    def show_widget_7(self):
+        self.widget_6.setVisible(False)
+        self.widget_7.setVisible(True)
+
+    def show_widget_8(self):
+        self.widget_7.setVisible(False)
+        self.widget_8.setVisible(True)
+
+    def show_widget_9(self):
+        if self.w8_radioButton_f.isChecked():
+            self.gender_client = "ж"
+        if self.w8_radioButton_m.isChecked():
+            self.gender_client = "ч"
+        self.age_client = str(self.w8_horizontalSlider_age.value())
+        self.height_client = str(self.w8_horizontalSlider_height.value())
+        self.choice_client = self.w8_comboBox_choice.currentText()
+        self.reason_client = self.w8_comboBox_reason.currentText()
+        data = [self.gender_client, self.age_client, self.height_client, self.choice_client, self.reason_client]
+        try:
+            with open('user_data_2.csv', 'a', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                if file.tell() == 0:
+                    writer.writerow(['Стать', 'Вік', 'Зріст', 'Вибір', 'Причина'])
+                writer.writerow(data)
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Помилка",
+                                          f"Помилка при записі в файл: {str(e)}")
+
+        self.widget_8.setVisible(False)
+        self.widget_9.setVisible(True)
+
+    def show_widget_1(self):
+        self.widget_9.setVisible(False)
+        self.widget_1.setVisible(True)
+
+    def exit(self):
+        exit()
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
